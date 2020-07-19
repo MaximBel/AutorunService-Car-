@@ -11,13 +11,14 @@ import android.widget.EditText;
 import java.util.ArrayList;
 
 public class CustomListAdapter extends BaseAdapter {
-    private static final String DEFAULT_STRING = "Enter package name";
+    private String defaultString;
     Context context;
     ArrayList<View> viewData;
     ArrayList<ServicePackageData> serviceData;
     LayoutInflater inflter;
 
     public CustomListAdapter(Context applicationContext) {
+        defaultString = applicationContext.getResources().getString(R.string.Enter_package_name);
         viewData = new ArrayList<>();
         serviceData = new ArrayList<>();
         this.context = applicationContext;
@@ -65,7 +66,7 @@ public class CustomListAdapter extends BaseAdapter {
     }
 
     public void addElement() {
-        addElement(DEFAULT_STRING, false);
+        addElement(defaultString, false);
         viewData.add(null);
     }
 

@@ -12,12 +12,8 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import com.car.servicerunner.utils.AutorunFileUtils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -88,7 +84,6 @@ public class AutorunService extends Service implements Runnable {
     }
 
     public static void buildNotificationChannel(Context appContext) {
-
         NotificationChannel chan1 = new NotificationChannel(NOTIFICATION_CHANNEL,
                 appContext.getString(R.string.default_notification_channel_id),
                 NotificationManager.IMPORTANCE_NONE);
@@ -168,6 +163,8 @@ public class AutorunService extends Service implements Runnable {
         Notification notification = builder.build();
         startForeground(1, notification);
 
+        fileRootPath = AutorunFileUtils.getAppFileRootPath(this.getApplicationContext());
+
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -198,7 +195,7 @@ public class AutorunService extends Service implements Runnable {
 
                 ArrayList<String> outputString = new ArrayList<String>();
                 outputString.add(currentLastService);
-                WriteFile(LAST_SERVICE_FILE, outputString);
+                AutorunFileUtils.WriteFile(fileRootPath, LAST_SERVICE_FILE, outputString);
                 Log.d(TAG, "Last service has updated: " + lastService);
             }
 
@@ -210,56 +207,7 @@ public class AutorunService extends Service implements Runnable {
         }
     }
 
-    public ArrayList<String> ReadFile(String fileName) {
-        Log.d(TAG, "ReadFile()");
-        ArrayList<String> returnList = new ArrayList<>();
-        String tempString = null;
 
-        if (fileRootPath.equals("")) {
-            fileRootPath = this.getApplicationContext().getFilesDir().getPath();
-        }
-
-        try {
-            FileInputStream fileInputStream = new FileInputStream(new File(fileRootPath + "/" + fileName));
-            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-
-            while ((tempString = bufferedReader.readLine()) != null) {
-                returnList.add(tempString);
-            }
-            fileInputStream.close();
-            bufferedReader.close();
-        } catch (IOException ex) {
-            Log.d(TAG, ex.getMessage());
-        }
-        return returnList;
-    }
-
-    public boolean WriteFile(String fileName, ArrayList<String> stringList) {
-        Log.d(TAG, "WriteFile()");
-
-        if (fileRootPath.equals("")) {
-            fileRootPath = this.getApplicationContext().getFilesDir().getPath();
-        }
-
-        try {
-            new File(fileRootPath).mkdir();
-            File file = new File(fileRootPath + "/" + fileName);
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-            FileOutputStream fileOutputStream = new FileOutputStream(file, false);
-            fileOutputStream.flush();
-            for (String str : stringList) {
-                fileOutputStream.write((str + System.getProperty("line.separator")).getBytes());
-            }
-            fileOutputStream.close();
-            return true;
-        } catch (IOException ex) {
-            Log.d(TAG, ex.getMessage());
-        }
-        return false;
-    }
 
     private String checkTheLastActivityByPackage(ArrayList<ServicePackageData> packages) {
         HashMap<String, Long> packageMap = new HashMap<String, Long>();
@@ -307,7 +255,7 @@ public class AutorunService extends Service implements Runnable {
                     Log.d(TAG, "run() thread is interrupted");
                 }
 
-                ArrayList<String> list = ReadFile(LAST_SERVICE_FILE);
+                ArrayList<String> list = AutorunFileUtils.ReadFile(fileRootPath, LAST_SERVICE_FILE);
                 if (!list.isEmpty()) {
                     for (ServicePackageData data : serviceDataList) {
                         if (data.getPackageName().equals(list.get(0)) && data.isAutorunRequired()) {
@@ -324,7 +272,7 @@ public class AutorunService extends Service implements Runnable {
     }
 
     private void readServiceList() {
-        ArrayList<String> fileStringList = ReadFile(SERVICE_LIST_FILE);
+        ArrayList<String> fileStringList = AutorunFileUtils.ReadFile(fileRootPath, SERVICE_LIST_FILE);
 
         serviceDataList.clear();
         for (String line : fileStringList) {
@@ -340,7 +288,7 @@ public class AutorunService extends Service implements Runnable {
         for (ServicePackageData data : serviceData) {
             fileStringList.add(ServiceDataSerializer.serializeServiceData(data));
         }
-        WriteFile(SERVICE_LIST_FILE, fileStringList);
+        AutorunFileUtils.WriteFile(fileRootPath, SERVICE_LIST_FILE, fileStringList);
     }
 
     private static class ServiceDataSerializer {

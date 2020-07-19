@@ -10,6 +10,8 @@ import android.os.RemoteException;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.ListView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,6 +20,8 @@ public class AutorunActivity extends AppCompatActivity implements View.OnClickLi
     static private final String TAG = AutorunActivity.class.getSimpleName();
 
     ListView simpleList;
+    EditText editTextNewRow;
+    CheckBox checkBoxAutorun;
     CustomListAdapter customAdapter;
 
     private IServiceRunner iServiceRunner = null;
@@ -44,6 +48,8 @@ public class AutorunActivity extends AppCompatActivity implements View.OnClickLi
         bindToService();
 
         simpleList = (ListView) findViewById(R.id.simpleListView);
+        editTextNewRow = (EditText) findViewById(R.id.editTextPackageName);
+        checkBoxAutorun = (CheckBox) findViewById(R.id.checkBoxAutorun);
         customAdapter = new CustomListAdapter(getApplicationContext());
         simpleList.setAdapter(customAdapter);
     }
@@ -68,8 +74,7 @@ public class AutorunActivity extends AppCompatActivity implements View.OnClickLi
                 startService();
                 break;
             case R.id.buttonAddRow:
-                customAdapter.addElement();
-                updateCustomList();
+                handleAddRow();
                 break;
             case R.id.buttonRemRow:
                 customAdapter.removeElement();
@@ -122,6 +127,19 @@ public class AutorunActivity extends AppCompatActivity implements View.OnClickLi
         } catch (RemoteException e) {
             Log.d(TAG, "handleWritePackage()", e);
         }
+    }
+
+    private void handleAddRow() {
+        String packageName = editTextNewRow.getText().toString();
+        if (packageName.equals("") || packageName.equals("Enter package name")) {
+            return;
+        }
+        boolean autorunStatus = checkBoxAutorun.isChecked();
+        customAdapter.addElement(packageName, autorunStatus);
+        updateCustomList();
+
+        editTextNewRow.setText(R.string.Enter_package_name);
+        checkBoxAutorun.setChecked(false);
     }
 
     void updateCustomList() {
