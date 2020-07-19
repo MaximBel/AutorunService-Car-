@@ -28,7 +28,7 @@
             android:onClick="onClick"
             android:text="Add row"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/buttonStartService" />
+            app:layout_constraintTop_toBottomOf="@+id/editTextPackageName" />
 
         <Button
             android:id="@+id/buttonRemRow"
@@ -56,6 +56,25 @@
             android:text="Write packages"
             app:layout_constraintStart_toEndOf="@+id/buttonRemRow"
             app:layout_constraintTop_toTopOf="@+id/buttonAddRow" />
+
+        <EditText
+            android:id="@+id/editTextPackageName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="textPersonName"
+            android:text="Enter package name"
+            app:layout_constraintEnd_toStartOf="@+id/checkBoxAutorun"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/buttonStartService" />
+
+        <CheckBox
+            android:id="@+id/checkBoxAutorun"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Autorun"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/editTextPackageName" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
@@ -68,6 +87,7 @@
             android:id="@+id/simpleListView"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:clickable="false"
             android:divider="@color/material_blue_grey_800"
             android:dividerHeight="1dp"
             android:footerDividersEnabled="false">
