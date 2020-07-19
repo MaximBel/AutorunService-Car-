@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 public class AutorunService extends Service implements Runnable {
+    private static final boolean DEBUG_PROCESSES = false;
     private final static String SERVICE_LIST_FILE = "service_list.txt";
     private final static String LAST_SERVICE_FILE = "last_service.txt";
     private static final String TAG = AutorunService.class.getSimpleName();
@@ -104,7 +105,6 @@ public class AutorunService extends Service implements Runnable {
         Log.d(TAG, "getLastTimeUsedForPackage()");
         long lastTimeUsed = Long.MIN_VALUE;
 
-        String currentApp;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             UsageStatsManager usm = (UsageStatsManager) context.getSystemService(
                     Context.USAGE_STATS_SERVICE);
@@ -124,6 +124,33 @@ public class AutorunService extends Service implements Runnable {
         }
 
         return lastTimeUsed;
+    }
+
+    public static void checkCurrentApp(final Context context) {
+        Log.d(TAG, "getLastTimeUsedForPackage()");
+        long lastTimeUsed = Long.MIN_VALUE;
+
+        UsageStats currentApp;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            UsageStatsManager usm = (UsageStatsManager) context.getSystemService(
+                    Context.USAGE_STATS_SERVICE);
+            long time = System.currentTimeMillis();
+            List<UsageStats> appStatsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_YEARLY,
+                    time - 1000 * 1000, time);
+            if (appStatsList != null && !appStatsList.isEmpty()) {
+
+                currentApp = appStatsList.get(0);
+                for (UsageStats stat : appStatsList) {
+                    if( currentApp.getLastTimeUsed() < stat.getLastTimeUsed()) {
+                        currentApp = stat;
+                    }
+                }
+
+                if (currentApp != null) {
+                    Log.d(TAG, "Current app is " + currentApp.getPackageName());
+                }
+            }
+        }
     }
 
     @Override
@@ -158,6 +185,12 @@ public class AutorunService extends Service implements Runnable {
         tryStartLastService();
 
         while (true) {
+
+            if(DEBUG_PROCESSES) {
+
+                checkCurrentApp(this.getApplicationContext());
+            }
+
             String currentLastService = checkTheLastActivityByPackage(serviceDataList);
 
             if (!currentLastService.equals("") && !currentLastService.equals(lastService)) {
