@@ -6,10 +6,11 @@ public final class ServicePackageData {
     private final String packageName;
     private final boolean autorunRequired;
 
-    ServicePackageData(@NonNull String servicePackage, boolean autorun) {
+    public ServicePackageData(@NonNull String servicePackage, boolean autorun) {
         packageName = servicePackage;
         autorunRequired = autorun;
     }
+
     public String getPackageName() {
         return packageName;
     }
