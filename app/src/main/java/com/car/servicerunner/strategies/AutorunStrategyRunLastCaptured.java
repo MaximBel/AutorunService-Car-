@@ -10,17 +10,19 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class AutorunStrategyRunLastCaptured extends AutorunStartegyBase {
+public class AutorunStrategyRunLastCaptured extends AutorunStrategyBase {
     private static final String TAG = AutorunStrategyRunLastCaptured.class.getSimpleName();
-    private static final int AUTORUN_DELAY_MSEC = 30000;
-    private final static String SERVICE_LIST_FILE = "service_list.txt";
-    private final static String LAST_SERVICE_FILE = "last_service.txt";
+    final static String SERVICE_LIST_FILE = "service_list.txt";
+    final static String LAST_SERVICE_FILE = "last_service.txt";
+    final static String AUTORUN_DELAY_FILE = "autorun_delay.txt";
 
-    private String lastService = "";
-    private ArrayList<ServicePackageData> serviceDataList = null;
+    String lastService = "";
+    ArrayList<ServicePackageData> serviceDataList = null;
+    int autorunDelay;
 
     public AutorunStrategyRunLastCaptured() {
         serviceDataList = new ArrayList<ServicePackageData>();
+        autorunDelay = DEFAULT_AUTORUN_DELAY;
     }
 
     @Override
@@ -28,6 +30,7 @@ public class AutorunStrategyRunLastCaptured extends AutorunStartegyBase {
         Log.d(TAG, "run()");
 
         readServiceList();
+        readAutorunDelay();
         tryStartLastService();
 
         while (true) {
@@ -91,7 +94,22 @@ public class AutorunStrategyRunLastCaptured extends AutorunStartegyBase {
         return autorunState;
     }
 
-    private void tryStartLastService() {
+    @Override
+    public void setAutorunDelay(int delay) {
+        Log.d(TAG, "setAutorunDelay()");
+
+        if (delay <= 0) {
+            return;
+        }
+
+        autorunDelay = delay;
+
+        writeAutorunDelay();
+        // check that data has successfully loaded to file
+        readAutorunDelay();
+    }
+
+    void tryStartLastService() {
         Log.d(TAG, "tryStartLastService()");
 
         Thread thread = new Thread() {
@@ -99,7 +117,7 @@ public class AutorunStrategyRunLastCaptured extends AutorunStartegyBase {
                 Log.d(TAG, "tryStartLastService().run()");
 
                 try {
-                    Thread.sleep(AUTORUN_DELAY_MSEC);
+                    Thread.sleep(autorunDelay);
                 } catch (InterruptedException e) {
                     Log.d(TAG, "run() thread is interrupted");
                 }
@@ -119,7 +137,7 @@ public class AutorunStrategyRunLastCaptured extends AutorunStartegyBase {
         thread.start();
     }
 
-    private String checkTheLastActivityByPackage(ArrayList<ServicePackageData> packages) {
+    String checkTheLastActivityByPackage(ArrayList<ServicePackageData> packages) {
         HashMap<String, Long> packageMap = new HashMap<String, Long>();
 
         for (ServicePackageData key : packages) {
@@ -144,23 +162,40 @@ public class AutorunStrategyRunLastCaptured extends AutorunStartegyBase {
         return (theLastActivity != null) ? theLastActivity.getKey() : "";
     }
 
-    private void readServiceList() {
+    void readServiceList() {
+        Log.d(TAG, "readServiceList()");
         ArrayList<String> fileStringList = AutorunFileUtils.ReadFile(fileRootPath, SERVICE_LIST_FILE);
 
         serviceDataList.clear();
         for (String line : fileStringList) {
-            ServicePackageData data = AutorunStartegyBase.ServiceDataSerializer.deserializeServiceData(line);
+            ServicePackageData data = AutorunStrategyBase.ServiceDataSerializer.deserializeServiceData(line);
             if (data != null) {
                 serviceDataList.add(data);
             }
         }
     }
 
-    private void writeServiceList(ArrayList<ServicePackageData> serviceData) {
+    void writeServiceList(ArrayList<ServicePackageData> serviceData) {
+        Log.d(TAG, "writeServiceList()");
         ArrayList<String> fileStringList = new ArrayList<String>();
         for (ServicePackageData data : serviceData) {
-            fileStringList.add(AutorunStartegyBase.ServiceDataSerializer.serializeServiceData(data));
+            fileStringList.add(AutorunStrategyBase.ServiceDataSerializer.serializeServiceData(data));
         }
         AutorunFileUtils.WriteFile(fileRootPath, SERVICE_LIST_FILE, fileStringList);
+    }
+
+    void readAutorunDelay() {
+        Log.d(TAG, "readAutorunDelay()");
+        ArrayList<String> fileStringList = AutorunFileUtils.ReadFile(fileRootPath, AUTORUN_DELAY_FILE);
+        if (fileStringList.size() > 0) {
+            autorunDelay = AutorunStrategyBase.ServiceDataSerializer.deserializeAutorunDelayData(fileStringList.get(0));
+        }
+    }
+
+    void writeAutorunDelay() {
+        Log.d(TAG, "writeAutorunDelay()");
+        ArrayList<String> fileStringList = new ArrayList<String>();
+        fileStringList.add(AutorunStrategyBase.ServiceDataSerializer.serializeAutorunDelayData(autorunDelay));
+        AutorunFileUtils.WriteFile(fileRootPath, AUTORUN_DELAY_FILE, fileStringList);
     }
 }

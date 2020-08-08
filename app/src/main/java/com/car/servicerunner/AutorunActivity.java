@@ -10,7 +10,6 @@ import android.os.RemoteException;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 
@@ -21,7 +20,7 @@ public class AutorunActivity extends AppCompatActivity implements View.OnClickLi
 
     ListView simpleList;
     EditText editTextNewRow;
-    CheckBox checkBoxAutorun;
+    EditText editTextDelay;
     CustomListAdapter customAdapter;
 
     private IServiceRunner iServiceRunner = null;
@@ -49,9 +48,15 @@ public class AutorunActivity extends AppCompatActivity implements View.OnClickLi
 
         simpleList = (ListView) findViewById(R.id.simpleListView);
         editTextNewRow = (EditText) findViewById(R.id.editTextPackageName);
-        checkBoxAutorun = (CheckBox) findViewById(R.id.checkBoxAutorun);
+        editTextDelay = (EditText) findViewById(R.id.editTextDelay);
         customAdapter = new CustomListAdapter(getApplicationContext());
         simpleList.setAdapter(customAdapter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(serviceConnection);
     }
 
     private void bindToService() {
@@ -62,6 +67,9 @@ public class AutorunActivity extends AppCompatActivity implements View.OnClickLi
     private void startService() {
         Intent myIntent = new Intent(this.getApplicationContext(), AutorunService.class);
         this.getApplicationContext().startForegroundService(myIntent);
+
+        //rebind to service
+        bindToService();
 
         Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
         startActivity(intent);
@@ -85,6 +93,9 @@ public class AutorunActivity extends AppCompatActivity implements View.OnClickLi
                 break;
             case R.id.buttonWritePack:
                 handleWritePackage();
+                break;
+            case R.id.buttonWriteDelay:
+                handleWriteDelay();
                 break;
             default:
                 Log.d(TAG, "Wrong button id");
@@ -134,12 +145,28 @@ public class AutorunActivity extends AppCompatActivity implements View.OnClickLi
         if (packageName.equals("") || packageName.equals("Enter package name")) {
             return;
         }
-        boolean autorunStatus = checkBoxAutorun.isChecked();
-        customAdapter.addElement(packageName, autorunStatus);
+        customAdapter.addElement(packageName, false);
         updateCustomList();
 
         editTextNewRow.setText(R.string.Enter_package_name);
-        checkBoxAutorun.setChecked(false);
+    }
+
+    private void handleWriteDelay() {
+        if (iServiceRunner == null) {
+            return;
+        }
+
+        // sec -> msec
+        int autorunDelay = Integer.parseInt(editTextDelay.getText().toString()) * 1000;
+        if (autorunDelay <= 0) {
+            return;
+        }
+
+        try {
+            iServiceRunner.setAutorunDelay(autorunDelay);
+        } catch (RemoteException e) {
+            Log.d(TAG, "handleWritePackage()", e);
+        }
     }
 
     void updateCustomList() {

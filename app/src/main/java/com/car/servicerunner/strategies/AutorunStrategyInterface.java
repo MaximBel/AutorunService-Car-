@@ -13,5 +13,7 @@ public interface AutorunStrategyInterface {
 
     boolean[] getServicesAutorunStates();
 
+    void setAutorunDelay(int delay);
+
     void run();
 }

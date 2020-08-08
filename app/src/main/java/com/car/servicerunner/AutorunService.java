@@ -11,7 +11,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 import com.car.servicerunner.strategies.AutorunStrategyInterface;
-import com.car.servicerunner.strategies.AutorunStrategyRunLastCaptured;
+import com.car.servicerunner.strategies.AutorunStrategyRunIfIdle;
 
 public class AutorunService extends Service implements Runnable {
     private static final boolean DEBUG_PROCESSES = false;
@@ -23,23 +23,32 @@ public class AutorunService extends Service implements Runnable {
     IServiceRunner iServiceRunner = new IServiceRunner.Stub() {
         @Override
         public void setServiceList(String[] packageArray, boolean[] autorunArray) {
+            Log.d(TAG, "setServiceList()");
             autorunStrategyInterface.setServiceList(packageArray, autorunArray);
         }
 
         @Override
         public String[] getServicesPackages() {
+            Log.d(TAG, "getServicesPackages()");
             return autorunStrategyInterface.getServicesPackages();
         }
 
         @Override
         public boolean[] getServicesAutorunStates() {
+            Log.d(TAG, "getServicesAutorunStates()");
             return autorunStrategyInterface.getServicesAutorunStates();
         }
+
+        @Override
+        public void setAutorunDelay(int delay) {
+            Log.d(TAG, "getServicesAutorunStates()");
+            autorunStrategyInterface.setAutorunDelay(delay);
+        }
+
     };
 
     public AutorunService() {
         Log.d(TAG, "AutorunService()");
-        new Thread(this).start();
     }
 
     public static void buildNotificationChannel(Context appContext) {
@@ -70,9 +79,11 @@ public class AutorunService extends Service implements Runnable {
         Notification notification = builder.build();
         startForeground(1, notification);
 
-        autorunStrategyInterface = new AutorunStrategyRunLastCaptured();
-
+        //autorunStrategyInterface = new AutorunStrategyRunLastCaptured();
+        autorunStrategyInterface = new AutorunStrategyRunIfIdle();
         autorunStrategyInterface.setContext(this.getApplicationContext());
+
+        new Thread(this).start();
 
         return super.onStartCommand(intent, flags, startId);
     }
@@ -85,6 +96,7 @@ public class AutorunService extends Service implements Runnable {
 
     @Override
     public void run() {
+        Log.d(TAG, "run()");
         while (true) {
             if (DEBUG_PROCESSES) {
                 autorunStrategyInterface.debugLastActivity();
