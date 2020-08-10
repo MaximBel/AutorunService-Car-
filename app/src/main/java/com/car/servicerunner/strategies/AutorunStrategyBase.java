@@ -16,7 +16,7 @@ import java.util.List;
 public class AutorunStrategyBase implements AutorunStrategyInterface {
     protected static final int DEFAULT_AUTORUN_DELAY = 10000; // 10 sec
     private static final String TAG = AutorunStrategyBase.class.getSimpleName();
-    private static final long SERVICE_MONITORING_OFFSET = 1000; // 1 sec
+    private static final long SERVICE_MONITORING_OFFSET = 30000; // 1 sec
 
     protected String fileRootPath = "";
     protected Context context;

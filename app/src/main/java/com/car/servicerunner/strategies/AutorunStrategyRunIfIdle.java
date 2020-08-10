@@ -18,8 +18,6 @@ public class AutorunStrategyRunIfIdle extends AutorunStrategyRunLastCaptured {
         for (ServicePackageData data : serviceDataList) {
             if (data.getPackageName().equals(packageName) && data.isAutorunRequired()) {
                 return true;
-            } else {
-                return false;
             }
         }
         return false;
